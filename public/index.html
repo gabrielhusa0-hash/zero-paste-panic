@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zero-Knowledge Pastebin</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>🔒 Zero-Knowledge Pastebin</h1>
+    <p class="subtitle">Šifrování probíhá v tvém prohlížeči. Server nikdy nevidí obsah ani klíč.</p>
+  </header>
+
+  <!-- CREATE VIEW -->
+  <section id="create-view" class="card">
+    <textarea id="content-input" placeholder="Sem napiš nebo vlož tajný text…"></textarea>
+
+    <div class="options">
+      <label>
+        Expirace:
+        <select id="expiry-select">
+          <option value="">nikdy</option>
+          <option value="10">10 minut</option>
+          <option value="60">1 hodina</option>
+          <option value="1440" selected>1 den</option>
+          <option value="10080">7 dní</option>
+        </select>
+      </label>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="burn-checkbox" />
+        <Smazat po prvním přečtení (burn-after-read)
+      </label>
+    </div>
+
+    <button id="create-btn">Zašifrovat a vytvořit odkaz</button>
+    <p id="create-error" class="error"></p>
+
+    <div id="result-box" class="hidden">
+      <p>Hotovo. Odkaz obsahuje šifrovací klíč a nikdy se neposílá na server:</p>
+      
+      <!-- TADY JE PŘIDANÉ TLAČÍTKO OTEVŘÍT -->
+      <div class="link-row">
+        <input id="result-link" type="text" readonly />
+        <button id="copy-btn">Kopírovat</button>
+        <button id="open-btn" class="secondary">Otevřít</button>
+      </div>
+
+      <p class="hint">Kdokoliv s tímto odkazem dokáže obsah dešifrovat. Sdílej ho jen důvěryhodně (např. jiným kanálem než email, kde to jde).</p>
+      <button id="new-paste-btn" class="secondary">Vytvořit další</button>
+    </div>
+  </section>
+
+  <!-- VIEW VIEW (reading a shared paste) -->
+  <section id="view-view" class="card hidden">
+    <div id="view-loading">Dešifrování…</div>
+    <div id="view-error" class="error hidden"></div>
+    <div id="view-content-box" class="hidden">
+      <pre id="view-content"></pre>
+      <p id="countdown" class="hint"></p>
+      <p id="burn-notice" class="hint hidden">⚠️ Tento text byl po přečtení nenávratně smazán ze serveru.</p>
+      <button id="create-new-btn" class="secondary">Vytvořit nový paste</button>
+    </div>
+  </section>
+
+  <footer>
+    <p>AES-256-GCM · klíč se generuje a zůstává výhradně v prohlížeči · <a href="https://github.com/" id="source-link">zdrojový kód</a></p>
+  </footer>
+</div>
+
+<div id="death-overlay" class="hidden">
+  <span id="death-face">:(</span>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
