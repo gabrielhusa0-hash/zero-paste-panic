@@ -152,3 +152,36 @@ footer a { color: var(--muted); }
   font-size: 8rem;
   font-family: monospace;
 }
+
+/* --- Responzivní úpravy pro mobily --- */
+@media screen and (max-width: 768px) {
+    body {
+        padding: 15px;
+        font-size: 14px;
+    }
+
+    /* Hlavní kontejner a formulář přes celou šířku */
+    .container, 
+    #result-box, 
+    .view-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+        padding: 15px;
+    }
+
+    /* Vstupní textové pole a tlačítka na výšku displeje */
+    textarea, 
+    input[type="text"], 
+    select, 
+    button {
+        width: 100% !important;
+        font-size: 16px !important; /* Větší písmo, aby se na to dobře klepalo prstem */
+    }
+
+    /* Zmenšení paddingu pro panic obrazovku na mobilech, aby text neutekl */
+    div[style*="position: fixed"] {
+        padding: 20px !important;
+        font-size: 12px !important;
+    }
+}
