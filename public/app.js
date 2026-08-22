@@ -111,6 +111,24 @@ if (els.createBtn) {
                         window.open(link, '_blank');
                     };
                 }
+
+                // Přidání funkce pro kliknutí na tlačítko "Kopírovat"
+                const copyBtn = document.getElementById('copy-btn');
+                if (copyBtn) {
+                    copyBtn.onclick = async () => {
+                        try {
+                            await navigator.clipboard.writeText(link);
+                        } catch (err) {
+                            // Záloha pro prohlížeče/kontexty bez Clipboard API
+                            els.resultLink.select();
+                            els.resultLink.setSelectionRange(0, 99999);
+                            document.execCommand('copy');
+                        }
+                        const originalText = copyBtn.textContent;
+                        copyBtn.textContent = 'Zkopírováno!';
+                        setTimeout(() => { copyBtn.textContent = originalText; }, 1500);
+                    };
+                }
             } else {
                 els.createError.textContent = data.error || 'Chyba při vytváření.';
             }
