@@ -14,6 +14,11 @@ const els = {
     countdownEl: document.getElementById('countdown')
 };
 
+// Bezpečnostní pomocná funkce proti XSS
+function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
 // Funkce pro konverzi
 function ab2str(buf) {
     return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
@@ -128,87 +133,108 @@ async function handleView(id, keyBase64) {
             return;
         }
 
-        const burnAfterRead = data.burnAfterRead ?? true;
         const ciphertext = str2ab(data.ciphertext);
         const iv = str2ab(data.iv);
 
         const key = await importKey(keyBase64);
         const plaintext = await decryptText(ciphertext, iv, key);
 
-        // Zpráva se úspěšně dešifrovala, rovnou spouštíme celoobrazovkový panic
-        startSelfDestructCountdown();
+        // Schováme loading
+        if (els.viewLoading) {
+            els.viewLoading.classList.add('hidden');
+        }
+
+        // Okamžitě ukážeme zprávu s odpočtem v celoobrazovkovém okně
+        startSelfDestructCountdown(plaintext);
 
     } catch (err) {
+        if (els.viewLoading) els.viewLoading.classList.add('hidden');
         els.viewError.textContent = err.name === 'OperationError' 
             ? 'Dešifrování selhalo – chybí nebo je poškozený klíč.' 
             : 'Něco se nepovedlo.';
         els.viewError.classList.remove('hidden');
-    } finally {
-        els.viewLoading.classList.add('hidden');
     }
 }
 
-function startSelfDestructCountdown() {
-    // Okamžitě vytvoříme fullscreen overlay přes celou obrazovku, který ignoruje lištu prohlížeče
-    const panicScreen = document.createElement('div');
-    panicScreen.style.position = 'fixed';
-    panicScreen.style.top = '0';
-    panicScreen.style.left = '0';
-    panicScreen.style.width = '100vw';
-    panicScreen.style.height = '100vh';
-    panicScreen.style.backgroundColor = '#000';
-    panicScreen.style.color = '#00ff00';
-    panicScreen.style.fontFamily = 'monospace';
-    panicScreen.style.padding = '40px';
-    panicScreen.style.boxSizing = 'border-box';
-    panicScreen.style.zIndex = '999999';
-    panicScreen.style.overflow = 'hidden';
-    panicScreen.style.cursor = 'pointer';
+function startSelfDestructCountdown(plaintext) {
+    let secondsLeft = 5;
 
-    panicScreen.innerHTML = `
-        <pre style="color: #00ff00; line-height: 1.1; font-size: 14px; margin: 0 0 20px 0;">
+    // Vytvoříme celoobrazovkový prvek, kde bude vidět zpráva i odpočet
+    const screen = document.createElement('div');
+    screen.style.position = 'fixed';
+    screen.style.top = '0';
+    screen.style.left = '0';
+    screen.style.width = '100vw';
+    screen.style.height = '100vh';
+    screen.style.backgroundColor = '#0b0b0b';
+    screen.style.color = '#00ff00';
+    screen.style.fontFamily = 'monospace';
+    screen.style.padding = '40px';
+    screen.style.boxSizing = 'border-box';
+    screen.style.zIndex = '999999';
+    screen.style.overflowY = 'auto';
+
+    // Funkce pro vykreslení stavu odpočtu a zprávy
+    const renderContent = (secs) => {
+        screen.innerHTML = `
+            <div style="max-width: 800px; margin: 0 auto; border: 1px solid #333; padding: 20px; background: #000; box-shadow: 0 0 20px rgba(0,255,0,0.1);">
+                <h3 style="margin-top: 0; color: #ff5555; border-bottom: 1px solid #333; padding-bottom: 10px;">DEŠIFROVANÁ ZPRÁVA</h3>
+                <div style="background: #111; padding: 15px; border: 1px solid #222; font-size: 16px; white-space: pre-wrap; word-break: break-all; margin-bottom: 20px; color: #fff;">${escapeHtml(plaintext)}</div>
+                <div style="color: #ffaa00; font-weight: bold; margin-bottom: 20px;">Systém zkolabuje a zpráva zmizí za ${secs} sekund...</div>
+            </div>
+        `;
+    };
+
+    renderContent(secondsLeft);
+    document.body.appendChild(screen);
+
+    const interval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft > 0) {
+            renderContent(secondsLeft);
+        } else {
+            clearInterval(interval);
+            
+            // Po 5 sekundách naskočí natvrdo SSHRD Panic
+            screen.style.backgroundColor = '#000';
+            screen.style.cursor = 'pointer';
+            screen.innerHTML = `
+                <pre style="color: #00ff00; line-height: 1.1; font-size: 14px; margin: 0 0 20px 0;">
   .-'-.
  /     \\
  | 0 0 |
  |  v  |
  \\     /
   '-.-'
-        </pre>
-        <div style="font-size: 14px; line-height: 1.5; color: #00ff00;">
-            PANIC: CPU 0 caller 0xfffffff00702d4c0: "usb stack forced panic"<br>
-            Debugger called: &lt;panic&gt;<br>
-            VM buffer: 0xffffff8012345678, file: /AppleInternal/BuildRoot/Library/Caches/com.apple.xbs/Sources/xnu/xnu-7195.141.2/bsd/kern/kern_shield.c, line 412<br>
-            <br>
-            Apple Credential Manager: critical storage sector unreadable.<br>
-            hfs_mount: ffs_mount failed with error 10<br>
-            Root filesystem partition signature invalid or unmounted.<br>
-            RAMdisk mounted successfully at /dev/disk0s1, but physical store refused secure handshake.<br>
-            <br>
-            Backtrace (CPU 0):<br>
-            0x-fffffff00702d4c0 0x-fffffff006f81a8c 0x-fffffff006f81520<br>
-            <br>
-            FATAL EXCEPTION: System halted. All memory cleared.<br>
-            <span style="color: #666; font-size: 12px;">[ Klikněte kamkoliv nebo stiskněte libovolnou klávesu pro návrat ]</span>
-        </div>
-    `;
+                </pre>
+                <div style="font-size: 14px; line-height: 1.5; color: #00ff00;">
+                    PANIC: CPU 0 caller 0xfffffff00702d4c0: "usb stack forced panic"<br>
+                    Debugger called: &lt;panic&gt;<br>
+                    VM buffer: 0xffffff8012345678, file: /AppleInternal/BuildRoot/Library/Caches/com.apple.xbs/Sources/xnu/xnu-7195.141.2/bsd/kern/kern_shield.c, line 412<br>
+                    <br>
+                    Apple Credential Manager: critical storage sector unreadable.<br>
+                    hfs_mount: ffs_mount failed with error 10<br>
+                    Root filesystem partition signature invalid or unmounted.<br>
+                    RAMdisk mounted successfully at /dev/disk0s1, but physical store refused secure handshake.<br>
+                    <br>
+                    Backtrace (CPU 0):<br>
+                    0x-fffffff00702d4c0 0x-fffffff006f81a8c 0x-fffffff006f81520<br>
+                    <br>
+                    FATAL EXCEPTION: System halted. All memory cleared.<br>
+                    <span style="color: #666; font-size: 12px; display: inline-block; margin-top: 20px;">[ Klikněte kamkoliv nebo stiskněte libovolnou klávesu pro návrat ]</span>
+                </div>
+            `;
 
-    document.body.appendChild(panicScreen);
+            const exitPanic = () => {
+                window.removeEventListener('keydown', exitPanic);
+                screen.removeEventListener('click', exitPanic);
+                window.location.href = '/';
+            };
 
-    // Funkce pro únik zpět na hlavní stránku po kliknutí nebo stisku klávesy
-    const exitPanic = () => {
-        window.removeEventListener('keydown', exitPanic);
-        panicScreen.removeEventListener('click', exitPanic);
-        
-        panicScreen.innerHTML = '';
-        panicScreen.style.backgroundColor = '#000';
-        
-        setTimeout(() => {
-            window.location.href = '/';
-        }, 200);
-    };
-
-    window.addEventListener('keydown', exitPanic);
-    panicScreen.addEventListener('click', exitPanic);
+            window.addEventListener('keydown', exitPanic);
+            screen.addEventListener('click', exitPanic);
+        }
+    }, 1000);
 }
 
 // Router
@@ -220,9 +246,11 @@ function init() {
     if (id && keyB64) {
         handleView(id, keyB64);
     } else {
-        els.viewLoading.classList.add('hidden');
-        els.viewError.textContent = 'Neplatný odkaz.';
-        els.viewError.classList.remove('hidden');
+        if (els.viewLoading) els.viewLoading.classList.add('hidden');
+        if (els.viewError) {
+            els.viewError.textContent = 'Neplatný odkaz.';
+            els.viewError.classList.remove('hidden');
+        }
     }
 }
 

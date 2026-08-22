@@ -41,4 +41,4 @@ zero-paste-panic/
     └── app.js         # veškerá kryptografie + logika na straně klienta + Panic režim
 
     API
-    MetodaCestaPopisPOST/api/pasteUloží { ciphertext, iv, expiresInMinutes?, burnAfterRead? } → { id }GET/api/paste/:idVrátí { ciphertext, iv, burnAfterRead }, smaže při expiraci/burnuGET/p/:idServíruje frontend pro zobrazení paste (klíč je v #fragmentu)GET/healthHealth check
+    MetodaCestaPopisPOST/api/pasteUloží { ciphertext, iv, expiresInMinutes?, burnAfterRead? } → { id }GET/api/paste/:idVrátí { ciphertext, iv, burnAfterRead }, smaže při expiraci/burnuGET/p/:idServíruje frontend pro zobrazení paste klíč je v #fragmentu)GET/healthHealth check
