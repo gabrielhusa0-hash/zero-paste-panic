@@ -161,6 +161,7 @@ function startSelfDestructCountdown(plaintext) {
 
     // Vytvoříme celoobrazovkový prvek, kde bude vidět zpráva i odpočet
     const screen = document.createElement('div');
+    screen.className = 'panic-screen';
     screen.style.position = 'fixed';
     screen.style.top = '0';
     screen.style.left = '0';

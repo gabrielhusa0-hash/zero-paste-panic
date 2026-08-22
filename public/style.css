@@ -155,33 +155,74 @@ footer a { color: var(--muted); }
 
 /* --- Responzivní úpravy pro mobily --- */
 @media screen and (max-width: 768px) {
-    body {
-        padding: 15px;
-        font-size: 14px;
+    .wrap {
+        padding: 24px 16px 24px;
     }
 
-    /* Hlavní kontejner a formulář přes celou šířku */
-    .container, 
-    #result-box, 
-    .view-container {
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box;
-        padding: 15px;
+    header { margin-bottom: 20px; }
+    header h1 { font-size: 1.35rem; }
+    .subtitle { font-size: 0.88rem; }
+
+    .card { padding: 16px; }
+
+    /* Textarea a tlačítka: plná šířka, font 16px kvůli iOS (jinak Safari při focusu zoomuje) */
+    textarea#content-input {
+        min-height: 180px;
+        font-size: 16px;
     }
 
-    /* Vstupní textové pole a tlačítka na výšku displeje */
-    textarea, 
-    input[type="text"], 
-    select, 
     button {
-        width: 100% !important;
-        font-size: 16px !important; /* Větší písmo, aby se na to dobře klepalo prstem */
+        width: 100%;
+        font-size: 16px;
+        padding: 13px 16px;
     }
 
-    /* Zmenšení paddingu pro panic obrazovku na mobilech, aby text neutekl */
-    div[style*="position: fixed"] {
+    /* .options: select a checkbox pod sebe, každý přes celou šířku */
+    .options {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .options label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .options select {
+        flex: 1;
+        margin-left: 12px;
+        font-size: 16px;
+        padding: 8px 10px;
+    }
+
+    /* .link-row: input nahoře přes celou šířku, tlačítka pod ním vedle sebe */
+    .link-row {
+        flex-direction: column;
+    }
+    .link-row input {
+        font-size: 16px;
+        padding: 12px;
+    }
+    .link-row button {
+        width: 100%;
+    }
+
+    button.secondary { margin-top: 10px; }
+
+    #death-face { font-size: 5rem; }
+}
+
+@media screen and (max-width: 400px) {
+    .wrap { padding: 20px 12px 20px; }
+    header h1 { font-size: 1.2rem; }
+}
+
+/* Panic obrazovka na mobilu (viz .panic-screen třída v app.js) */
+@media screen and (max-width: 768px) {
+    .panic-screen {
         padding: 20px !important;
-        font-size: 12px !important;
+    }
+    .panic-screen pre {
+        font-size: 11px !important;
     }
 }
